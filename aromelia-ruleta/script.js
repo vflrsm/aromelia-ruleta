@@ -1,105 +1,125 @@
-    const wheel = document.getElementById("wheel");
-    const spinBtn = document.getElementById("spin-btn");
-    const finalValue = document.getElementById("final-value");
-    //Object that stores values of minimum and maximum angle for a value
-    const rotationValues = [
-    { minDegree: 0, maxDegree: 30, value: 2 },
-    { minDegree: 31, maxDegree: 90, value: 1 },
-    { minDegree: 91, maxDegree: 150, value: 6 },
-    { minDegree: 151, maxDegree: 210, value: 5 },
-    { minDegree: 211, maxDegree: 270, value: 4 },
-    { minDegree: 271, maxDegree: 330, value: 3 },
-    { minDegree: 331, maxDegree: 360, value: 2 },
-    ];
-    //Size of each piece
-    const data = [16, 16, 16, 16, 16, 16];
-    //background color for each piece
-    var pieColors = [
-    "#ba8e72",
-    "#dfb99d",
-    "#ba8e72",
-    "#dfb99d",
-    "#ba8e72",
-    "#dfb99d",
-    ];
-    //Create chart
-    let myChart = new Chart(wheel, {
-    //Plugin for displaying text on pie chart
+const wheel = document.getElementById("wheel");
+const spinBtn = document.getElementById("spin-btn");
+const finalValue = document.getElementById("final-value");
+
+const SHEET_CSV_URL =
+  "https://docs.google.com/spreadsheets/d/e/2PACX-1vRROamPqvJSXPr9ndmpLMHdQn5Nj9cXxQF2hD-hNBGlZvenhYepKUUdPFG8SRnaRXeZzddjTfnsQJvQ/pub?gid=0&single=true&output=csv";
+
+let myChart = null;
+let segments = [];
+
+// Parse CSV text into array of {label, color}
+function parseCSV(text) {
+  const lines = text.trim().split("\n");
+  const result = [];
+  for (let i = 1; i < lines.length; i++) {
+    const cols = lines[i].split(",");
+    if (cols.length >= 2) {
+      result.push({
+        label: cols[0].trim(),
+        color: cols[1].trim(),
+      });
+    }
+  }
+  return result;
+}
+
+// Build rotation values based on number of segments
+function buildRotationValues(count) {
+  const degPerSegment = 360 / count;
+  const values = [];
+  for (let i = 0; i < count; i++) {
+    values.push({
+      minDegree: Math.round(i * degPerSegment),
+      maxDegree: Math.round((i + 1) * degPerSegment - 1),
+      value: i + 1,
+    });
+  }
+  return values;
+}
+
+function createChart(segs) {
+  if (myChart) myChart.destroy();
+
+  const data = new Array(segs.length).fill(Math.floor(360 / segs.length));
+  const labels = segs.map((s) => s.label);
+  const colors = segs.map((s) => s.color);
+
+  myChart = new Chart(wheel, {
     plugins: [ChartDataLabels],
-    //Chart Type Pie
     type: "pie",
     data: {
-        //Labels(values which are to be displayed on chart)
-        labels: ["15%", "20%", "25%", "20%", "15%", "15%"],
-        //Settings for dataset/pie
-        datasets: [
-        {
-            backgroundColor: pieColors,
-            data: data,
-        },
-        ],
+      labels: labels,
+      datasets: [{ backgroundColor: colors, data: data }],
     },
     options: {
-        //Responsive chart
-        responsive: true,
-        animation: { duration: 0 },
-        plugins: {
-        //hide tooltip and legend
+      responsive: true,
+      animation: { duration: 0 },
+      plugins: {
         tooltip: false,
-        legend: {
-            display: false,
-        },
-        //display labels inside pie chart
+        legend: { display: false },
         datalabels: {
-            color: "#ffffff",
-            formatter: (_, context) => context.chart.data.labels[context.dataIndex],
-            font: { size: 24 },
+          color: "#ffffff",
+          formatter: (_, context) =>
+            context.chart.data.labels[context.dataIndex],
+          font: { size: 20, weight: "600" },
+          textStrokeColor: "rgba(0,0,0,0.3)",
+          textStrokeWidth: 3,
         },
-        },
+      },
     },
-    });
-    //display value based on the randomAngle
-    const valueGenerator = (angleValue) => {
-    for (let i of rotationValues) {
-        //if the angleValue is between min and max then display it
-        if (angleValue >= i.minDegree && angleValue <= i.maxDegree) {
-        finalValue.innerHTML = `<p>¡Felicidades! adquiere tu descuento 😍🎉`;
-        spinBtn.disabled = false;
-        break;
-        }
-    }
-    };
+  });
+}
 
-    //Spinner count
-    let count = 0;
-    //100 rotations for animation and last rotation for result
-    let resultValue = 101;
-    //Start spinning
-    spinBtn.addEventListener("click", () => {
-    spinBtn.disabled = true;
-    //Empty final value
-    finalValue.innerHTML = `<p>¡Suerte!</p>`;
-    //Generate random degrees to stop at
-    let randomDegree = Math.floor(Math.random() * (355 - 0 + 1) + 0);
-    //Interval for rotation animation
-    let rotationInterval = window.setInterval(() => {
-        //Set rotation for piechart
-        /*
-        Initially to make the piechart rotate faster we set resultValue to 101 so it rotates 101 degrees at a time and this reduces by 1 with every count. Eventually on last rotation we rotate by 1 degree at a time.
-        */
-        myChart.options.rotation = myChart.options.rotation + resultValue;
-        //Update chart with new value;
-        myChart.update();
-        //If rotation>360 reset it back to 0
-        if (myChart.options.rotation >= 360) {
-        count += 1;
-        resultValue -= 5;
-        myChart.options.rotation = 0;
-        } else if (count > 15 && myChart.options.rotation == randomDegree) {
-        valueGenerator(randomDegree);
-        clearInterval(rotationInterval);
-        count = 0;
-        resultValue = 101;
-        }
-    }, 10);
-    });
+async function loadFromSheet() {
+  try {
+    const res = await fetch(SHEET_CSV_URL);
+    const text = await res.text();
+    segments = parseCSV(text);
+    if (segments.length > 0) {
+      createChart(segments);
+      finalValue.innerHTML = `<p>¡Da click en "Girar" para empezar! 🎂🎉</p>`;
+    }
+  } catch (e) {
+    console.error("Error cargando Sheet:", e);
+    finalValue.innerHTML = `<p>Error cargando la ruleta. Intenta de nuevo.</p>`;
+  }
+}
+
+const valueGenerator = (angleValue) => {
+  const rotationValues = buildRotationValues(segments.length);
+  for (let i of rotationValues) {
+    if (angleValue >= i.minDegree && angleValue <= i.maxDegree) {
+      const won = segments[i.value - 1]?.label || "Premio";
+      finalValue.innerHTML = `<p>🎉 ¡Felicidades! Ganaste: <strong>${won}</strong></p>`;
+      spinBtn.disabled = false;
+      break;
+    }
+  }
+};
+
+let count = 0;
+let resultValue = 101;
+
+spinBtn.addEventListener("click", () => {
+  spinBtn.disabled = true;
+  finalValue.innerHTML = `<p>¡Buena suerte! 🍀</p>`;
+  let randomDegree = Math.floor(Math.random() * (355 - 0 + 1) + 0);
+  let rotationInterval = window.setInterval(() => {
+    myChart.options.rotation = myChart.options.rotation + resultValue;
+    myChart.update();
+    if (myChart.options.rotation >= 360) {
+      count += 1;
+      resultValue -= 5;
+      myChart.options.rotation = 0;
+    } else if (count > 15 && myChart.options.rotation == randomDegree) {
+      valueGenerator(randomDegree);
+      clearInterval(rotationInterval);
+      count = 0;
+      resultValue = 101;
+    }
+  }, 10);
+});
+
+// Load on start
+loadFromSheet();
