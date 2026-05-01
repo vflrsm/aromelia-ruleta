@@ -25,7 +25,7 @@ function parseCSV(text) {
 
 function createChart(segs) {
   if (myChart) myChart.destroy();
-  const data = new Array(segs.length).fill(1); // equal slices
+  const data = new Array(segs.length).fill(1);
   const labels = segs.map((s) => s.label);
   const colors = segs.map((s) => s.color);
 
@@ -39,7 +39,7 @@ function createChart(segs) {
     options: {
       responsive: true,
       animation: { duration: 0 },
-      rotation: -90, // start from top
+      rotation: -90,
       plugins: {
         tooltip: false,
         legend: { display: false },
@@ -54,23 +54,6 @@ function createChart(segs) {
       },
     },
   });
-}
-
-// The arrow points RIGHT (3 o'clock = 0°).
-// Chart starts at rotation offset (top = -90°).
-// We need to find which segment is at the arrow position.
-function getWinningSegment(currentRotation) {
-  const count = segments.length;
-  const degPerSegment = 360 / count;
-
-  // Normalize the rotation so we know where "0° of the chart" is relative to arrow
-  // Arrow is at 0° (right). Chart rotation starts at top (-90°).
-  // The angle under the arrow = (360 - currentRotation) % 360
-  let arrowAngle = ((360 - (currentRotation % 360)) + 360) % 360;
-
-  // Find which segment index falls under arrowAngle
-  const index = Math.floor(arrowAngle / degPerSegment) % count;
-  return segments[index]?.label || "Premio";
 }
 
 async function loadFromSheet() {
@@ -90,32 +73,26 @@ async function loadFromSheet() {
 
 let count = 0;
 let resultValue = 101;
-let currentRotation = -90; // track total rotation (starts at top)
 
 spinBtn.addEventListener("click", () => {
   spinBtn.disabled = true;
   finalValue.innerHTML = `<p>¡Buena suerte! 🍀</p>`;
-
   let randomDegree = Math.floor(Math.random() * (355 - 0 + 1) + 0);
 
   let rotationInterval = window.setInterval(() => {
-    currentRotation += resultValue;
-    myChart.options.rotation = currentRotation % 360;
+    myChart.options.rotation = myChart.options.rotation + resultValue;
     myChart.update();
 
-    if (currentRotation % 360 >= 360 || currentRotation % 360 < resultValue) {
+    if (myChart.options.rotation >= 360) {
       count += 1;
       resultValue -= 5;
-    }
-
-    if (count > 15 && Math.round(currentRotation % 360) === randomDegree) {
+      myChart.options.rotation = 0;
+    } else if (count > 15 && myChart.options.rotation == randomDegree) {
       clearInterval(rotationInterval);
-      const won = getWinningSegment(currentRotation);
-      finalValue.innerHTML = `<p>🎉 ¡Felicidades! Ganaste: <strong>${won}</strong></p>`;
+      finalValue.innerHTML = `<p>🎉 ¡Felicidades! Acércate a reclamar tu premio</p>`;
       spinBtn.disabled = false;
       count = 0;
       resultValue = 101;
-      currentRotation = myChart.options.rotation;
     }
   }, 10);
 });
