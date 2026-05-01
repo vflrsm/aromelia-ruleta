@@ -1,0 +1,101 @@
+    * {
+        padding: 0;
+        margin: 0;
+        box-sizing: border-box;
+        font-family: "avenir", sans-serif;
+    }
+    body {
+        height: 100vh;
+        background: linear-gradient(135deg, #ffffff, #edd2c3);
+    }
+    h1 {
+        padding-top: 10px;
+        padding-right: 20px;
+        padding-bottom: 10px;
+        padding-left: 20px;
+        width: 25px;
+        height: 25px;
+        color: #786257;
+    }
+    
+    .wrapper {
+        width: 90%;
+        max-width: 34.37em;
+        max-height: 90vh;
+        background-color: #ffffff;
+        position: absolute;
+        transform: translate(-50%, -50%);
+        top: 50%;
+        left: 50%;
+        padding: 3em;
+        border-radius: 1em;
+        box-shadow: 0 4em 5em rgba(27, 8, 53, 0.2);
+    }
+    .logo-container {
+        position: absolute;
+        top: 3%;
+        left: 50%;
+        transform: translateX(-50%);
+        text-align: center;
+        width: 100%;
+    }
+    
+    .logo-container img {
+        width: 200px; /* Ajusta el tamaño según sea necesario */
+        display: block;
+        margin: 0 auto; /* Centra horizontalmente */
+    }
+    .container {
+        position: relative;
+        width: 100%;
+        height: 100%;
+    }
+    #wheel {
+        max-height: inherit;
+        width: inherit;
+        top: 0;
+        padding: 0;
+    }
+    @keyframes rotate {
+        100% {
+        transform: rotate(360deg);
+        }
+    }
+    #spin-btn {
+        position: absolute;
+        transform: translate(-50%, -50%);
+        top: 50%;
+        left: 50%;
+        height: 26%;
+        width: 26%;
+        border-radius: 50%;
+        cursor: pointer;
+        border: 0;
+        background: radial-gradient(#ffffff 50%, #dfdcdc 85%);
+        color: #cba38f;
+        text-transform: uppercase;
+        font-size: 1.8em;
+        letter-spacing: 0.1em;
+        font-weight: 600;
+    }
+    img {
+        position: absolute;
+        width: 4em;
+        top: 45%;
+        right: -8%;
+    }
+    #final-value {
+        font-size: 1.5em;
+        text-align: center;
+        margin-top: 1.5em;
+        color: #202020;
+        font-weight: 500;
+    }
+    @media screen and (max-width: 768px) {
+        .wrapper {
+        font-size: 12px;
+        }
+        img {
+        right: -5%;
+        }
+    }
